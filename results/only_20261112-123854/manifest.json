@@ -1,0 +1,39 @@
+{
+  "budget": 5000,
+  "command": "/home/jack/anaconda3/envs/charm/bin/python experiments/run_all.py --profile paper --only decap_nohint --reps 5",
+  "commit": "5d0981f",
+  "cores": 16,
+  "counts": {
+    "rows": 45,
+    "skipped": 1
+  },
+  "cpu": "11th Gen Intel(R) Core(TM) i7-11700 @ 2.50GHz",
+  "curve": "BN254",
+  "hostname": "J",
+  "max_case_seconds": 120.0,
+  "mem_kb": 32606236,
+  "micro": {
+    "G1_bytes": 46,
+    "G2_bytes": 90,
+    "GT_bytes": 514,
+    "g2_exp_ms_min": 0.047309000365203246,
+    "order_bits": 254,
+    "pairing_ms_min": 15.164896001806483,
+    "pairing_ms_p50": 15.314779000618728
+  },
+  "order_leak": {
+    "lex_spearman": 0.7944641920107223,
+    "lex_trials_max": 790,
+    "lex_trials_min": 1,
+    "prh_spearman": -0.050830115589538864,
+    "prh_trials_max": 788,
+    "prh_trials_min": 3,
+    "samples": 400
+  },
+  "platform": "Linux-5.4.0-42-generic-x86_64-with-debian-bullseye-sid",
+  "profile": "paper",
+  "python": "3.6.13",
+  "reps": 5,
+  "seed": 20261111,
+  "started_at": "2026-11-12T12:38:54"
+}

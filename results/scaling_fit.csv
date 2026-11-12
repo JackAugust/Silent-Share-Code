@@ -1,0 +1,5 @@
+mode,order,sizes,size_min,size_max,exponent,r2
+encap,sparse,6,50.0,1600.0,0.987,1.0
+encap,dense,3,50.0,200.0,1.977,1.0
+decap,hint,5,5.0,30.0,0.987,0.9996
+decap,prh,4,10.0,16.0,8.942,0.9729

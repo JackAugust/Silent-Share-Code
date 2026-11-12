@@ -1,0 +1,39 @@
+{
+  "command": "/home/jack/anaconda3/envs/charm/bin/python experiments/run_compare.py",
+  "commit": "9374127",
+  "cores": 16,
+  "cpu": "11th Gen Intel(R) Core(TM) i7-11700 @ 2.50GHz",
+  "curve": "BN254",
+  "hostname": "J",
+  "mem_kb": 32606236,
+  "micro": {
+    "G1_bytes": 46,
+    "G2_bytes": 90,
+    "GT_bytes": 514,
+    "g2_exp_ms_min": 0.0456710004073102,
+    "order_bits": 254,
+    "pairing_ms_min": 14.968773000873625,
+    "pairing_ms_p50": 15.082077999977628
+  },
+  "platform": "Linux-5.4.0-42-generic-x86_64-with-debian-bullseye-sid",
+  "python": "3.6.13",
+  "seed": 20261111,
+  "sizes": [
+    5,
+    10,
+    30,
+    50,
+    100,
+    200
+  ],
+  "started_at": "2026-11-11T20:41:35",
+  "thresholds": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    8,
+    10
+  ]
+}
