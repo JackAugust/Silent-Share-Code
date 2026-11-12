@@ -17,8 +17,6 @@ per-user polynomials, so that
 
 All measurements use the BN254 asymmetric pairing curve.
 
-**Code:** https://anonymous.4open.science/r/SilentShare/
-
 ---
 
 ## 1. What is in this repository
