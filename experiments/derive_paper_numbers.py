@@ -13,6 +13,7 @@ import statistics
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 PATH = os.path.join(ROOT, "results", "raw_all.csv")
+BILATERAL_PATH = os.path.join(ROOT, "results", "bilateral.csv")
 
 rows = list(csv.DictReader(open(PATH, encoding="utf-8")))
 
@@ -73,9 +74,10 @@ for r in sel("decap", "hint"):
     a, p = key
     rs = sel("decap", "hint", a=a, p=p)
     t = med(rs, "total_ms")
-    print("  |A|=%2d |P|=%4d  total=%7.1f  pairing=%7.1f  decode=%5.2f  2A*Tpair=%7.1f  ratio=%.3f"
+    st = med(rs, "salt_trials")
+    print("  |A|=%2d |P|=%4d  total=%7.1f  pairing=%7.1f  decode=%5.2f  2A*Tpair=%7.1f  ratio=%.3f  salt_trials=%s"
           % (a, p, t, med(rs, "pairing_ms"), med(rs, "gokvs_decode_ms"),
-             2 * a * TPAIR, t / (2 * a * TPAIR)))
+             2 * a * TPAIR, t / (2 * a * TPAIR), st if st is not None else "-"))
 
 print("== decapsulation without hint (budget 5000) ==")
 seen = set()
@@ -88,16 +90,39 @@ for r in sel("decap", "prh"):
     rs = sel("decap", "prh", a=a, d=d)
     t = med(rs, "total_ms")
     tr = med(rs, "trials")
+    st = med(rs, "salt_trials")
     base = 2 * a * TPAIR
-    print("  |A|=%2d d=%d  total=%8.1f  trials=%6.1f  per-cand=%5.1f ms  "
-          "binom=%d" % (a, d, t, tr, (t - base) / tr, _binom(a, d)))
+    print("  |A|=%2d d=%d  total=%8.1f  trials=%6.1f  salt_trials=%s  per-cand=%5.1f ms  "
+          "binom=%d" % (a, d, t, tr, st if st is not None else "-",
+                         (t - base) / tr, _binom(a, d)))
 
 print("== bilateral ==")
-for r in sorted(sel("bilateral"), key=lambda x: int(float(x["n_policy"]))):
-    p = int(float(r["n_policy"]))
-    rs = sel("bilateral", p=p)
-    print("  |P|=%4d  %8.1f ms  comm=%7d B" % (p, med(rs, "total_ms"),
-                                               med(rs, "comm_bytes")))
+if os.path.exists(BILATERAL_PATH):
+    # bilateral.csv keeps nO/nR separate and is the table the paper quotes.
+    # raw_all.csv stores n_owner+n_requester in n_policy, which cannot recover
+    # the (10,10)/(400,400)/(1600,1600) pairs on its own.
+    with open(BILATERAL_PATH, newline="", encoding="utf-8") as handle:
+        b_rows = list(csv.DictReader(handle))
+    groups = {}
+    for row in b_rows:
+        key = (int(float(row["nO"])), int(float(row["nR"])))
+        groups.setdefault(key, []).append(row)
+    for key in sorted(groups):
+        if key[0] != key[1]:
+            continue
+        rs = groups[key]
+        total = statistics.median(float(r["total_wall_ms"]) for r in rs)
+        comm = statistics.median(float(r["total_comm_bytes"]) for r in rs)
+        st = [float(r["salt_trials"]) for r in rs if r.get("salt_trials")]
+        st_txt = ("%.2f" % statistics.median(st)) if st else "-"
+        print("  (%4d,%4d)  %8.1f ms  comm=%7d B  salt_trials=%s"
+              % (key[0], key[1], total, comm, st_txt))
+else:
+    for r in sorted(sel("bilateral"), key=lambda x: int(float(x["n_policy"]))):
+        p = int(float(r["n_policy"]))
+        rs = sel("bilateral", p=p)
+        print("  |P|=%4d  %8.1f ms  comm=%7d B" % (p, med(rs, "total_ms"),
+                                                   med(rs, "comm_bytes")))
 
 print("== baseline: fuzzy IB-ME ==")
 for mode in ("baseline_enc", "baseline_dec"):

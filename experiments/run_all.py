@@ -49,7 +49,8 @@ sys.path.insert(0, SRC)
 
 CURVE = "BN254"
 SEED = 20261111
-EXTRA_COLUMNS = ["ct_bytes", "sk_bytes", "comm_bytes", "gokvs_ms", "note"]
+EXTRA_COLUMNS = ["ct_bytes", "sk_bytes", "comm_bytes", "gokvs_ms",
+                 "salt_trials", "n_owner", "n_requester", "note"]
 
 # ----------------------------------------------------------------------
 # Plan: what each profile runs.  Sizes are attributes (|A|) and policy
@@ -232,12 +233,16 @@ def make_row(env, commit, mode, order, n_attr, d, n_policy, **kw):
         "n_attr": n_attr, "d": d, "n_policy": n_policy,
         "overlap": kw.pop("overlap", ""),
         "pairing_ms": None, "gokvs_decode_ms": None, "recon_ms": None,
-        "total_ms": None, "trials": None, "budget_exhausted": False,
+        "total_ms": None, "trials": None, "salt_trials": None,
+        "budget_exhausted": False,
         "success": None, "false_accept": False, "rss_kb": rss_kb(),
         "run_id": kw.pop("run_id", ""), "rep": kw.pop("rep", 0),
         "ct_bytes": kw.pop("ct_bytes", ""), "sk_bytes": kw.pop("sk_bytes", ""),
         "comm_bytes": kw.pop("comm_bytes", ""),
-        "gokvs_ms": kw.pop("gokvs_ms", ""), "note": kw.pop("note", ""),
+        "gokvs_ms": kw.pop("gokvs_ms", ""),
+        "n_owner": kw.pop("n_owner", ""),
+        "n_requester": kw.pop("n_requester", ""),
+        "note": kw.pop("note", ""),
     }
     row.update(kw)
     return row
@@ -372,7 +377,9 @@ def run_decap_hint(env, plan, reps, commit, run_id, skipped):
                 pairing_ms=details["pairing_ms"],
                 gokvs_decode_ms=details["decode_ms"],
                 recon_ms=details["recon_ms"],
-                trials=details["trials"], success=recovered == kappa,
+                trials=details["trials"],
+                salt_trials=details.get("salt_trials", 1),
+                success=recovered == kappa,
                 rep=rep, run_id=run_id,
                 ct_bytes=serialized_size(env["group"], [ct["D1"], ct["D2"]]),
                 sk_bytes=serialized_size(env["group"],
@@ -418,6 +425,7 @@ def run_decap_nohint(env, plan, reps, budget, commit, run_id, max_seconds,
                 gokvs_decode_ms=details["decode_ms"],
                 recon_ms=details["recon_ms"],
                 trials=details["trials"],
+                salt_trials=details.get("salt_trials", 1),
                 budget_exhausted=details["budget_exhausted"],
                 success=recovered == kappa, rep=rep, run_id=run_id,
                 note="budget=%d" % budget))
@@ -459,6 +467,9 @@ def run_bilateral(env, plan, reps, commit, run_id, skipped):
                 rows.append(make_row(
                     env, commit, "bilateral", "hint", DEFAULT_D, DEFAULT_D,
                     n_owner + n_requester, total_ms=total,
+                    salt_trials=(dd_o.get("salt_trials", 1) +
+                                 dd_r.get("salt_trials", 1)),
+                    n_owner=n_owner, n_requester=n_requester,
                     success=(rec_o == k_o and rec_r == k_r),
                     comm_bytes=comm, rep=rep, run_id=run_id,
                     ct_bytes=comm,

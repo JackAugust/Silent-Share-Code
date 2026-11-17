@@ -41,7 +41,13 @@ class _El(object):
         return _El(self.v * other.v, self.g)
 
     def __pow__(self, exponent):
-        return _El(pow(self.v, int(exponent), self.g.P), self.g)
+        e = int(exponent)
+        if e < 0:
+            # StubGroup.P is prime; Python 3.7 has no pow(a, -1, p).
+            if self.v % self.g.P == 0:
+                raise ZeroDivisionError("negative exponent of zero")
+            e = (self.g.P - 1) + (e % (self.g.P - 1))
+        return _El(pow(self.v, e, self.g.P), self.g)
 
     def __eq__(self, other):
         return isinstance(other, _El) and self.v == other.v

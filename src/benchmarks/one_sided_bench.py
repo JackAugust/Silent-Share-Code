@@ -127,6 +127,7 @@ def main():
                     'recon_ms': dec_details['recon_ms'],
                     'total_decap_wall_ms': dec_details['total_ms'],
                     'trials': dec_details['trials'],
+                    'salt_trials': dec_details.get('salt_trials', 1),
                     'success': rec_kappa == kappa
                 })
 

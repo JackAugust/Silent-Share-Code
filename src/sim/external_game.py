@@ -14,24 +14,48 @@ callables as arguments so that it can be unit-tested with opaque tokens and
 reused with the real PB-KEM.
 """
 
-from dataclasses import dataclass
-
-
-@dataclass
-class HonestParties:
+class HonestParties(object):
     """Attribute sets of the two honest parties (never empty by default)."""
-    attrs_owner: list
-    attrs_requester: list
+
+    def __init__(self, attrs_owner, attrs_requester):
+        self.attrs_owner = attrs_owner
+        self.attrs_requester = attrs_requester
+
+    def __repr__(self):
+        return ("HonestParties(attrs_owner=%r, attrs_requester=%r)"
+                % (self.attrs_owner, self.attrs_requester))
+
+    def __eq__(self, other):
+        return (isinstance(other, HonestParties)
+                and self.attrs_owner == other.attrs_owner
+                and self.attrs_requester == other.attrs_requester)
 
 
-@dataclass
-class SessionOutcome:
-    ct_owner: object
-    ct_requester: object
-    tau: object
-    nonce: object
-    b_R: int
-    aborted: bool
+class SessionOutcome(object):
+    """Result of one honest bilateral session."""
+
+    def __init__(self, ct_owner, ct_requester, tau, nonce, b_R, aborted):
+        self.ct_owner = ct_owner
+        self.ct_requester = ct_requester
+        self.tau = tau
+        self.nonce = nonce
+        self.b_R = b_R
+        self.aborted = aborted
+
+    def __repr__(self):
+        return ("SessionOutcome(ct_owner=%r, ct_requester=%r, tau=%r, "
+                "nonce=%r, b_R=%r, aborted=%r)"
+                % (self.ct_owner, self.ct_requester, self.tau, self.nonce,
+                   self.b_R, self.aborted))
+
+    def __eq__(self, other):
+        return (isinstance(other, SessionOutcome)
+                and self.ct_owner == other.ct_owner
+                and self.ct_requester == other.ct_requester
+                and self.tau == other.tau
+                and self.nonce == other.nonce
+                and self.b_R == other.b_R
+                and self.aborted == other.aborted)
 
 
 def directional_bit(attrs, policy, d):

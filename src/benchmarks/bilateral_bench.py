@@ -116,6 +116,8 @@ def main():
                     'encap_O_gokvs_ms': eO.get('gokvs_total_ms', 0.0),
                     'decap_R_decode_ms': dO.get('decode_ms', 0.0),    # renamed for clarity
                     'decap_O_decode_ms': dR.get('decode_ms', 0.0),    # renamed for clarity
+                    'decap_R_salt_trials': dO.get('salt_trials', 1),
+                    'decap_O_salt_trials': dR.get('salt_trials', 1),
                     'ct_R_size_bytes': size_R,        # new
                     'ct_O_size_bytes': size_O,        # new
                     'total_comm_bytes': comm_bytes    # new
@@ -137,6 +139,7 @@ def main():
     fields = ['nO','nR','round','total_wall_ms','total_cpu_ms','total_mem_kb',
               'encap_R_wall_ms','encap_O_wall_ms','decap_R_wall_ms','decap_O_wall_ms',
               'encap_R_gokvs_ms','encap_O_gokvs_ms','decap_R_decode_ms','decap_O_decode_ms',
+              'decap_R_salt_trials','decap_O_salt_trials',
               'ct_R_size_bytes','ct_O_size_bytes','total_comm_bytes']
     write_csv(os.path.join(out_dir, 'bilateral.csv'), fields, rows)
     print("\nCSV written to results/bilateral.csv")

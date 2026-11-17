@@ -14,7 +14,11 @@ DEFAULT_D = 5
 USE_SPARSE_GOKVS = True
 SPARSE_GOKVS_RHO = 3
 SPARSE_GOKVS_M_FACTOR = 1.25
-SPARSE_GOKVS_MAX_ATTEMPTS = 20
+# Retry budget B of the paper: an encoder that fails to peel within B salts
+# publishes a uniform dummy vector, so the residual failure probability is
+# (1-p1)^B (2^-134 at p1 = 0.235), and the published salt index costs
+# ceil(log2(B+1)) = 9 bits.
+SPARSE_GOKVS_MAX_ATTEMPTS = 384
 
 # ------------------------------------------------------------
 # Unified extended policy sizes

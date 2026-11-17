@@ -51,7 +51,14 @@ class El:
         return El((self.v * other.v) % self.g.P, self.g)
 
     def __pow__(self, exponent):
-        return El(pow(self.v, int(exponent), self.g.P), self.g)
+        e = int(exponent)
+        if e < 0:
+            # Fermat inverse in the prime field used by StubGroup.  Python 3.7
+            # (and older) does not support pow(a, -1, p).
+            if self.v % self.g.P == 0:
+                raise ZeroDivisionError("negative exponent of zero")
+            e = (self.g.P - 1) + (e % (self.g.P - 1))
+        return El(pow(self.v, e, self.g.P), self.g)
 
     def __eq__(self, other):
         return isinstance(other, El) and self.v == other.v
@@ -234,3 +241,41 @@ def test_rows_are_distinct_and_size_rho():
         row = gokvs._row("probe-%d" % i)
         assert len(row) == 3 and len(set(row)) == 3
         assert all(0 <= p < 13 for p in row)
+
+
+def test_published_seed_is_not_overwritten():
+    """The encoder must keep salt_0 as the published seed.
+
+    joint_encode() retries salts internally and exposes the accepted salt as
+    final_salt; overwriting salt0/initial_salt with that value would make the
+    ciphertext publish the accepted salt and reintroduce the policy leak.
+    """
+    n, m, seed = 60, 75, 123456789
+    attrs = ["s%d" % i for i in range(n)]
+    vals = values(n, base=11)
+    enc = SparseGOKVS(StubGroup(), n, rho=3, m=m, salt=seed, max_attempts=25)
+    _, accepted = enc.joint_encode([list(zip(attrs, vals))])
+    assert enc.initial_salt == seed
+    assert enc.salt0 == seed
+    assert enc.final_salt == accepted
+
+
+def test_decoder_derives_the_accepted_salt_from_the_seed():
+    """The published seed must regenerate the accepted salt sequence.
+
+    This is the decoder side of the seed-publish fix: given only salt_0 the
+    row function can reconstruct every candidate hypergraph, including the
+    one used by the encoder.
+    """
+    n, m, seed = 60, 75, 987654321
+    attrs = ["d%d" % i for i in range(n)]
+    vals = values(n, base=17)
+    enc = SparseGOKVS(StubGroup(), n, rho=3, m=m, salt=seed, max_attempts=25)
+    vectors, accepted = enc.joint_encode([list(zip(attrs, vals))])
+    D = vectors[0]
+
+    derived = [seed] + [hashdom.derive_salt(seed, b) for b in range(1, 25)]
+    assert accepted in derived
+    dec = SparseGOKVS(StubGroup(), n, rho=3, m=m, salt=accepted, max_attempts=1)
+    for attr, val in zip(attrs, vals):
+        assert dec.decode(D, attr) == val

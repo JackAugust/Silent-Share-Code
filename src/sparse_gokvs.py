@@ -17,14 +17,15 @@ drops to zero because the edge was peeled through another bucket).  The
 
 Rows are rho-subsets derived from H_s (hashdom.row_seed), and retry salts
 are derived as salt_b = H_s(salt_0 || b) for b >= 1, with attempt 0 using
-salt_0 itself.  The b = 0 identity is load-bearing: encap() encodes two
-vectors by handing the accepted salt back in with max_attempts = 1, and
-decap() rebuilds the row function from the salt stored in the ciphertext.
-If attempt 0 hashed its input, encoding and decoding would use different
-row functions, and the single-attempt re-encode would peel a fresh
-hypergraph instead of the one that already peeled.
+salt_0 itself.  The b = 0 identity is load-bearing for reproducing a
+hypergraph from a candidate salt.  The ciphertext carries salt_0, the retry
+budget B and, when peeling succeeded, the accepted index J_enc: a decoder
+holding J_enc evaluates that salt alone, while a decoder without it derives
+salt_b = H_s(salt_0 || b) for b = 0..B-1 and stops at the first candidate that
+reconstructs.  Publishing J_enc costs ceil(log2(B+1)) bits and is part of the
+leakage tuple, not of the secret state.
 `joint_encode` peels once and assigns two value vectors over the same
-hypergraph and the same final salt, matching Algorithm 3.
+hypergraph and the same accepted salt, matching Algorithm 2.
 
 Coefficients are all one: Decode(attr) = prod_{j in row(attr)} D[j], i.e.
 rho group multiplications and no exponentiations.
@@ -42,7 +43,7 @@ except ImportError:  # pragma: no cover - exercised only without Charm
 
 
 class SparseGOKVS:
-    def __init__(self, group, n, rho=3, m=None, salt=0, max_attempts=20):
+    def __init__(self, group, n, rho=3, m=None, salt=0, max_attempts=384):
         """
         Args:
             group:          PairingGroup instance (e.g. BN254, BLS12_381).
@@ -50,7 +51,7 @@ class SparseGOKVS:
             rho:            row sparsity (default 3).
             m:              number of buckets; if None, m = ceil(1.25 * n).
             salt:           initial salt salt_0 for row hashing.
-            max_attempts:   number of salt retries if peeling fails.
+            max_attempts:   salt budget B (384 in the paper).
         """
         self.group = group
         self.order = int(group.order())
@@ -58,6 +59,7 @@ class SparseGOKVS:
         self.rho = rho
         self.m = int(math.ceil(1.25 * n)) if m is None else int(m)
         self.salt0 = salt
+        self.initial_salt = salt
         self.max_attempts = max_attempts
 
         if self.rho < 2:
@@ -139,7 +141,6 @@ class SparseGOKVS:
                 continue
             self.final_salt = self._current_salt
             self.peel_order = order
-            self.salt0 = self._current_salt
             return vectors, self.final_salt
 
         raise RuntimeError(
